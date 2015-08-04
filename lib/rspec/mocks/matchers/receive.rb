@@ -8,6 +8,7 @@ module RSpec
         def initialize(message, block)
           @message                 = message
           @block                   = block
+          @ordered                 = false
           @recorded_customizations = []
         end
 
@@ -38,6 +39,7 @@ module RSpec
 
         def setup_allowance(subject, &block)
           warn_if_any_instance("allow", subject)
+          warn_about_allow_ordering if ordered?
           setup_mock_proxy_method_substitute(subject, :add_stub, block)
         end
 
@@ -51,6 +53,12 @@ module RSpec
 
         def setup_any_instance_allowance(subject, &block)
           setup_any_instance_method_substitute(subject, :stub, block)
+        end
+
+        def ordered(*args, &block)
+          @ordered = true
+          @recorded_customizations << ExpectationCustomization.new(:ordered, args, block)
+          self
         end
 
         MessageExpectation.public_instance_methods(false).each do |method|
@@ -68,6 +76,10 @@ module RSpec
           @describable ||= DefaultDescribable.new(@message)
         end
 
+        def ordered?
+          @ordered
+        end
+
         def warn_if_any_instance(expression, subject)
           return unless AnyInstance::Proxy === subject
 
@@ -76,6 +88,13 @@ module RSpec
             "is probably not what you meant, it does not operate on " \
             "any instance of `#{subject.klass}`. " \
             "Use `#{expression}_any_instance_of(#{subject.klass}).to` instead."
+          )
+        end
+
+        def warn_about_allow_ordering
+          RSpec.warning(
+            "`allow(...).to receive` is not supported and will" \
+            "have no effect, use `and_return(*ordered_values)` instead."
           )
         end
 

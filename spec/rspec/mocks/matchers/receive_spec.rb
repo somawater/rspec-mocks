@@ -267,6 +267,14 @@ module RSpec
         it_behaves_like "resets partial mocks cleanly" do
           let(:target) { allow(object) }
         end
+
+        context 'ordered with receive counts' do
+          specify 'is not supported' do
+            dbl = double
+            expect_warning_with_call_site(__FILE__, __LINE__ + 1)
+            allow(dbl).to receive(:one).ordered
+          end
+        end
       end
 
       describe "allow(...).not_to receive" do
