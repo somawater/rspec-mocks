@@ -78,7 +78,9 @@ module RSpec
       end
 
       def __warn_if_used_further!
-        @__unfrozen_attributes[:expired] = true
+        if @__unfrozen_attributes
+          @__unfrozen_attributes[:expired] = true
+        end
       end
 
     private
